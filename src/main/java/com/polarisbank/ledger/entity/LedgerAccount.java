@@ -22,7 +22,7 @@ public class LedgerAccount {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false,length = 20)
+    @Column(name = "type", nullable = false,length = 20)
     @Enumerated(EnumType.STRING)
     private StatusType type;
 
@@ -37,7 +37,18 @@ public class LedgerAccount {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public LedgerAccount() {
+    protected LedgerAccount() {
+    }
+
+    public LedgerAccount(
+        String code, String name, StatusType type,
+        StatusBalance normalBalance) {
+        this.code = code;
+        this.name = name;
+        this.type = type;
+        this.normalBalance = normalBalance;
+        this.ledgerStatusAccount = StatusAccount.ACTIVE;
+        this.createdAt = Instant.now();
     }
 
     public UUID getIdLedgerAccount() {
@@ -49,47 +60,25 @@ public class LedgerAccount {
         return code;
     }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public StatusType getType() {
         return type;
     }
 
-    public void setType(StatusType type) {
-        this.type = type;
-    }
-
     public StatusBalance getNormalBalance() {
         return normalBalance;
-    }
-
-    public void setNormalBalance(StatusBalance normalBalance) {
-        this.normalBalance = normalBalance;
     }
 
     public StatusAccount getLedgerStatusAccount() {
         return ledgerStatusAccount;
     }
 
-    public void setLedgerStatusAccount(StatusAccount ledgerStatusAccount) {
-        this.ledgerStatusAccount = ledgerStatusAccount;
-    }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
 }
