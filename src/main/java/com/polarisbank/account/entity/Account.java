@@ -1,6 +1,7 @@
 package com.polarisbank.account.entity;
 
-import com.polarisbank.customer.Customer;
+import com.polarisbank.account.StatusAccount;
+import com.polarisbank.customer.entity.Customer;
 import jakarta.persistence.*;
 
 import java.time.Instant;

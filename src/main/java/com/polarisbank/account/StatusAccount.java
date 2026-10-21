@@ -1,4 +1,4 @@
-package com.polarisbank.account.entity;
+package com.polarisbank.account;
 
 public enum StatusAccount {
     ACTIVE, BLOCKED, CLOSED
