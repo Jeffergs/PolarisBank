@@ -83,4 +83,9 @@ public class Customer {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public void changeStatus(StatusCustomer statusCustomer) {
+        this.statusCustomer = statusCustomer;
+        this.updatedAt = Instant.now();
+    }
 }
