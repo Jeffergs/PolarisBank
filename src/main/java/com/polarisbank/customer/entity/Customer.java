@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.UUID;
 
 @Entity
@@ -21,7 +22,7 @@ public class Customer {
     @Column(name = "cpf", nullable = false, unique = true, length = 11)
     private String cpf;
 
-    @Column(name = "email", nullable = false, unique = true, length = 254)
+    @Column(name = "email", nullable = false, length = 254)
     private String email;
 
     @Column(name = "birth_date", nullable = false)
@@ -45,7 +46,7 @@ public class Customer {
         String email, LocalDate birthDate) {
         this.fullName = fullName;
         this.cpf = cpf;
-        this.email = email;
+        this.email = email.trim().toLowerCase(Locale.ROOT);
         this.birthDate = birthDate;
         this.statusCustomer = StatusCustomer.ACTIVE;
         this.createdAt = Instant.now();
