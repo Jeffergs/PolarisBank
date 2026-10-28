@@ -94,6 +94,17 @@ public class CustomerRequestTest {
     }
 
     @Test
+    void rejectCpfContainingLetters() {
+        var request = new CustomerRequest(
+                "Jefferson Gomes",
+                "5299822472A",
+                "jefferson@example.com",
+                parseBirthDate("20/05/1995")
+        );
+        assertFalse(validator.validate(request).isEmpty());
+    }
+
+    @Test
     void rejectEmailNull() {
         var request = new CustomerRequest("Jefferson Gomes", "52998224725", null, parseBirthDate("20/05/1995"));
         assertFalse(validator.validate(request).isEmpty());
