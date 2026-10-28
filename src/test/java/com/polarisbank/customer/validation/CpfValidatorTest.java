@@ -38,4 +38,10 @@ class CpfValidatorTest {
         assertFalse(validator.isValid("11111111111"));
     }
 
+    @Test
+    void rejectCpfContainingLetters() {
+        var validator = new CpfValidator();
+        assertFalse(validator.isValid("5299822472A"));
+    }
+
 }

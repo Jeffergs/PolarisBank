@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.UUID;
 
 @Entity
@@ -45,7 +46,7 @@ public class Customer {
         String email, LocalDate birthDate) {
         this.fullName = fullName;
         this.cpf = cpf;
-        this.email = email;
+        this.email = email.trim().toLowerCase(Locale.ROOT);
         this.birthDate = birthDate;
         this.statusCustomer = StatusCustomer.ACTIVE;
         this.createdAt = Instant.now();
