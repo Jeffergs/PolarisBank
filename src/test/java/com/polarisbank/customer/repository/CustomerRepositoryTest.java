@@ -1,6 +1,7 @@
 package com.polarisbank.customer.repository;
 
 import com.polarisbank.customer.StatusCustomer;
+import com.polarisbank.customer.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
@@ -156,8 +157,10 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldRejectCustomerWithoutEmail() {
-        Customer customer = new Customer("Cliente Um", "52998224725", null, parseBirthDate("20/05/1995"));
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(customer));
+        assertThrows(
+                BusinessException.class,
+                () -> new Customer("Cliente Um", "52998224725", null, parseBirthDate("20/05/1995"))
+        );
     }
 
     @Test

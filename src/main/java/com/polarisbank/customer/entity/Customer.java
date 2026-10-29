@@ -1,6 +1,7 @@
 package com.polarisbank.customer.entity;
 
 import com.polarisbank.customer.StatusCustomer;
+import com.polarisbank.customer.exception.BusinessException;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -46,6 +47,9 @@ public class Customer {
         String email, LocalDate birthDate) {
         this.fullName = fullName;
         this.cpf = cpf;
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("E-mail é obrigatório.");
+        }
         this.email = email.trim().toLowerCase(Locale.ROOT);
         this.birthDate = birthDate;
         this.statusCustomer = StatusCustomer.ACTIVE;
