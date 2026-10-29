@@ -13,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.polarisbank.customer.exception.BusinessException;
 
 import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,12 +27,19 @@ class CustomerServiceTest {
 
     @InjectMocks
     private CustomerService customerService;
-
     private CustomerRequest request;
+    private Customer customer;
 
     @BeforeEach
     void setUp() {
         request = new CustomerRequest(
+                "João Silva",
+                "52998224725",
+                "joao@email.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        customer = new Customer(
                 "João Silva",
                 "52998224725",
                 "joao@email.com",
@@ -80,6 +89,34 @@ class CustomerServiceTest {
         verify(customerRepository).existsByCpf(request.cpf());
         verify(customerRepository).existsByEmailIgnoreCase(request.email());
         verify(customerRepository, never()).save(any(Customer.class));
+    }
+
+    @Test
+    void shouldReturnCustomerWhenIdExists() {
+        UUID customerId = UUID.randomUUID();
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
+
+        Customer result = customerService.findCustomerById(customerId);
+
+        assertSame(customer, result);
+        verify(customerRepository).findById(customerId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCustomerDoesNotExist() {
+        UUID customerId = UUID.randomUUID();
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.findCustomerById(customerId)
+        );
+
+        verify(customerRepository).findById(customerId);
     }
 
 }

@@ -6,6 +6,8 @@ import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.repository.CustomerRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class CustomerService {
 
@@ -29,5 +31,10 @@ public class CustomerService {
                 request.birthDate()
         );
         customerRepository.save(customer);
+    }
+
+    public Customer findCustomerById(UUID customerId) {
+        return customerRepository.findById(customerId)
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
     }
 }
