@@ -4,8 +4,10 @@ import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.repository.CustomerRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 @Service
@@ -37,4 +39,9 @@ public class CustomerService {
         return customerRepository.findById(customerId)
                 .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
     }
+
+    public Page<Customer> findAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable);
+    }
+
 }

@@ -11,8 +11,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.polarisbank.customer.exception.BusinessException;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -118,5 +122,19 @@ class CustomerServiceTest {
 
         verify(customerRepository).findById(customerId);
     }
+
+    @Test
+    void shouldReturnPageOfCustomers() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Customer> expectedPage = new PageImpl<>(List.of(customer));
+
+        when(customerRepository.findAll(pageable)).thenReturn(expectedPage);
+
+        Page<Customer> result = customerService.findAllCustomers(pageable);
+
+        assertSame(expectedPage, result);
+        verify(customerRepository).findAll(pageable);
+    }
+
 
 }
