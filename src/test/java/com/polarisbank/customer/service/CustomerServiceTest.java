@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -174,39 +173,6 @@ class CustomerServiceTest {
 
         verifyNoInteractions(customerRepository);
         assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
-    }
-
-    @Test
-    void shouldNotUpdateTimestampWhenStatusRemainsTheSame() {
-        UUID customerId = UUID.randomUUID();
-        Instant originalUpdatedAt = customer.getUpdatedAt();
-
-        when(customerRepository.findById(customerId))
-                .thenReturn(Optional.of(customer));
-
-        customerService.changeCustomerStatus(customerId, StatusCustomer.ACTIVE);
-
-        assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
-        assertEquals(originalUpdatedAt, customer.getUpdatedAt());
-    }
-
-    @Test
-    void shouldRejectTransitionFromBlockedToInactive() {
-        customer.changeStatus(StatusCustomer.BLOCKED);
-
-        assertThrows(
-                BusinessException.class,
-                () -> customer.changeStatus(StatusCustomer.INACTIVE)
-        );
-    }
-
-    @Test
-    void shouldRejectTransitionFromBlockedToActive() {
-        customer.changeStatus(StatusCustomer.BLOCKED);
-        assertThrows(
-                BusinessException.class,
-                () -> customer.changeStatus(StatusCustomer.ACTIVE)
-        );
     }
 
 }

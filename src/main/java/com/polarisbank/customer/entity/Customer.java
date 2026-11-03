@@ -93,10 +93,9 @@ public class Customer {
         if (this.statusCustomer == statusCustomer) {
             return;
         }
-        if (this.statusCustomer == StatusCustomer.BLOCKED
-                && statusCustomer == StatusCustomer.INACTIVE) {
+        if (this.statusCustomer == StatusCustomer.BLOCKED) {
             throw new BusinessException(
-                    "Não é permitido alterar o status de BLOCKED para INACTIVE."
+                    "Não é permitido alterar o status de um cliente bloqueado por esta operação."
             );
         }
 

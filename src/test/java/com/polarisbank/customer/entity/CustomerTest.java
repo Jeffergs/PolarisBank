@@ -1,6 +1,7 @@
     package com.polarisbank.customer.entity;
 
     import com.polarisbank.customer.StatusCustomer;
+    import com.polarisbank.customer.exception.BusinessException;
     import org.junit.jupiter.api.Test;
 
     import java.time.Instant;
@@ -63,6 +64,42 @@
 
             assertTrue(customer.getUpdatedAt().isAfter(originalUpdatedAt));
         }
+
+        @Test
+        void shouldRejectStatusChangeWhenCustomerIsBlocked() {
+            Customer customer = new Customer(
+                    "Jefferson Gomes",
+                    "52998224725",
+                    "jefferson@example.com",
+                    parseBirthDate("20/05/1995")
+            );
+
+            customer.changeStatus(StatusCustomer.BLOCKED);
+
+            assertThrows(
+                    BusinessException.class,
+                    () -> customer.changeStatus(StatusCustomer.ACTIVE)
+            );
+        }
+
+        @Test
+        void shouldNotUpdateTimestampWhenStatusRemainsTheSame() {
+            Customer customer = new Customer(
+                    "Jefferson Gomes",
+                    "52998224725",
+                    "jefferson@example.com",
+                    parseBirthDate("20/05/1995")
+            );
+
+            Instant originalUpdatedAt = customer.getUpdatedAt();
+
+            customer.changeStatus(StatusCustomer.ACTIVE);
+
+            assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
+            assertEquals(originalUpdatedAt, customer.getUpdatedAt());
+        }
+
+
 
     }
 
