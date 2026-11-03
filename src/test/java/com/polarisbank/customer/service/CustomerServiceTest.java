@@ -1,5 +1,6 @@
 package com.polarisbank.customer.service;
 
+import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.repository.CustomerRepository;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -136,5 +139,74 @@ class CustomerServiceTest {
         verify(customerRepository).findAll(pageable);
     }
 
+    @Test
+    void shouldChangeCustomerStatusFromActiveToInactive() {
+        UUID customerId = UUID.randomUUID();
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
+
+        customerService.changeCustomerStatus(customerId, StatusCustomer.INACTIVE);
+
+        assertEquals(StatusCustomer.INACTIVE, customer.getStatusCustomer());
+        verify(customerRepository).findById(customerId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenChangingStatusOfNonexistentCustomer() {
+        UUID customerId = UUID.randomUUID();
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> customerService.changeCustomerStatus(customerId, StatusCustomer.INACTIVE));
+        verify(customerRepository).findById(customerId);
+    }
+
+    @Test
+    void shouldRejectNullCustomerStatus() {
+        UUID customerId = UUID.randomUUID();
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.changeCustomerStatus(customerId, null)
+        );
+
+        verifyNoInteractions(customerRepository);
+        assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
+    }
+
+    @Test
+    void shouldNotUpdateTimestampWhenStatusRemainsTheSame() {
+        UUID customerId = UUID.randomUUID();
+        Instant originalUpdatedAt = customer.getUpdatedAt();
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
+
+        customerService.changeCustomerStatus(customerId, StatusCustomer.ACTIVE);
+
+        assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
+        assertEquals(originalUpdatedAt, customer.getUpdatedAt());
+    }
+
+    @Test
+    void shouldRejectTransitionFromBlockedToInactive() {
+        customer.changeStatus(StatusCustomer.BLOCKED);
+
+        assertThrows(
+                BusinessException.class,
+                () -> customer.changeStatus(StatusCustomer.INACTIVE)
+        );
+    }
+
+    @Test
+    void shouldRejectTransitionFromBlockedToActive() {
+        customer.changeStatus(StatusCustomer.BLOCKED);
+        assertThrows(
+                BusinessException.class,
+                () -> customer.changeStatus(StatusCustomer.ACTIVE)
+        );
+    }
 
 }

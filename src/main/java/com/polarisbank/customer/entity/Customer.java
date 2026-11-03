@@ -90,6 +90,16 @@ public class Customer {
     }
 
     public void changeStatus(StatusCustomer statusCustomer) {
+        if (this.statusCustomer == statusCustomer) {
+            return;
+        }
+        if (this.statusCustomer == StatusCustomer.BLOCKED
+                && statusCustomer == StatusCustomer.INACTIVE) {
+            throw new BusinessException(
+                    "Não é permitido alterar o status de BLOCKED para INACTIVE."
+            );
+        }
+
         this.statusCustomer = statusCustomer;
         this.updatedAt = Instant.now();
     }

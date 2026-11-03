@@ -1,5 +1,6 @@
 package com.polarisbank.customer.service;
 
+import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.BusinessException;
@@ -43,5 +44,18 @@ public class CustomerService {
     public Page<Customer> findAllCustomers(Pageable pageable) {
         return customerRepository.findAll(pageable);
     }
+
+    public void changeCustomerStatus(UUID customerId, StatusCustomer newStatus) {
+        if (newStatus == null) {
+            throw new BusinessException("O status do cliente é obrigatório.");
+        }
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
+
+        customer.changeStatus(newStatus);
+    }
+
+
 
 }
