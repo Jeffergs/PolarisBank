@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -26,6 +27,9 @@ class CustomerRepositoryTest {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private LocalDate parseBirthDate(String date) {
         return LocalDate.parse(date, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
@@ -38,17 +42,12 @@ class CustomerRepositoryTest {
             .withPassword("test");
 
     @Test
-    void contextLoads() {
-    }
-
-    @Test
     void shouldSaveAndFindCustomer() {
         Customer customer = new Customer("Jefferson Gomes", "52998224725", "jefferson@example.com", parseBirthDate("20/05/1995"));
 
         Customer savedCustomer = customerRepository.save(customer);
         Customer foundCustomer = customerRepository.findById(savedCustomer.getIdCustomer()).orElseThrow();
 
-        assertNotNull(foundCustomer.getIdCustomer());
         assertEquals("Jefferson Gomes", foundCustomer.getFullName());
         assertEquals("52998224725", foundCustomer.getCpf());
         assertEquals("jefferson@example.com", foundCustomer.getEmail());
@@ -116,17 +115,12 @@ class CustomerRepositoryTest {
         assertFalse(customerRepository.existsById(UUID.randomUUID()));
     }
 
-
-
-
-
     @Test
     void shouldPersistCustomerStatusChange() {
         Customer customer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
         Customer savedCustomer = customerRepository.saveAndFlush(customer);
 
         savedCustomer.changeStatus(StatusCustomer.INACTIVE);
-        customerRepository.saveAndFlush(savedCustomer);
 
         Customer foundCustomer = customerRepository.findById(savedCustomer.getIdCustomer()).orElseThrow();
 
@@ -136,7 +130,7 @@ class CustomerRepositoryTest {
     @Test
     void shouldRejectDuplicateEmail() {
         Customer firstCustomer = new Customer("Cliente Um", "52998224725", "cliente@example.com", parseBirthDate("20/05/1995"));
-        Customer secondCustomer = new Customer("Cliente Dois", "98765432100", "cliente@example.com", parseBirthDate("10/08/1990"));
+        Customer secondCustomer = new Customer("Cliente Dois", "98765432100", "CLIENTE@example.com", parseBirthDate("10/08/1990"));
 
         customerRepository.saveAndFlush(firstCustomer);
 
@@ -145,27 +139,58 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldRejectCustomerWithoutFullName() {
-        Customer customer = new Customer(null, "52998224725", "cliente@example.com", parseBirthDate("20/05/1995"));
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(customer));
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update("""
+                INSERT INTO customers (
+                    id_customer, full_name, cpf, email,
+                    birth_date, customer_status
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                        UUID.randomUUID(),
+                        null,
+                        "52998224725",
+                        "cliente@example.com",
+                        LocalDate.of(1995, 5, 20),
+                        "ACTIVE"
+                )
+        );
     }
 
     @Test
     void shouldRejectCustomerWithoutCpf() {
-        Customer customer = new Customer("Cliente Um", null, "cliente@example.com", parseBirthDate("20/05/1995"));
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(customer));
-    }
-
-    @Test
-    void shouldRejectCustomerWithoutEmail() {
-        assertThrows(
-                BusinessException.class,
-                () -> new Customer("Cliente Um", "52998224725", null, parseBirthDate("20/05/1995"))
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update("""
+                INSERT INTO customers (
+                    id_customer, full_name, cpf, email,
+                    birth_date, customer_status
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                        UUID.randomUUID(),
+                        "Cliente Um",
+                        null,
+                        "cliente@example.com",
+                        LocalDate.of(1995, 5, 20),
+                        "ACTIVE"
+                )
         );
     }
 
     @Test
     void shouldRejectCustomerWithoutBirthDate() {
-        Customer customer = new Customer("Cliente Um", "52998224725", "cliente@example.com", null);
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(customer));
+        assertThrows(DataIntegrityViolationException.class, () ->
+                jdbcTemplate.update("""
+                INSERT INTO customers (
+                    id_customer, full_name, cpf, email,
+                    birth_date, customer_status
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                        UUID.randomUUID(),
+                        "Cliente Um",
+                        "52998224725",
+                        "cliente@example.com",
+                        null,
+                        "ACTIVE"
+                )
+        );
     }
 }

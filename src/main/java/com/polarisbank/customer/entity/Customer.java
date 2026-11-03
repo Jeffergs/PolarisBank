@@ -2,6 +2,7 @@ package com.polarisbank.customer.entity;
 
 import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.exception.BusinessException;
+import com.polarisbank.customer.validation.CpfValidator;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -45,12 +46,21 @@ public class Customer {
     public Customer(
         String fullName, String cpf,
         String email, LocalDate birthDate) {
+        if (fullName == null || fullName.isBlank()) {
+            throw new BusinessException("Nome é obrigatório.");
+        }
         this.fullName = fullName;
+        if (!new CpfValidator().isValid(cpf)) {
+            throw new BusinessException("CPF inválido.");
+        }
         this.cpf = cpf;
         if (email == null || email.isBlank()) {
             throw new BusinessException("E-mail é obrigatório.");
         }
         this.email = email.trim().toLowerCase(Locale.ROOT);
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
+            throw new BusinessException("A data de nascimento é inválida.");
+        }
         this.birthDate = birthDate;
         this.statusCustomer = StatusCustomer.ACTIVE;
         this.createdAt = Instant.now();
@@ -90,6 +100,9 @@ public class Customer {
     }
 
     public void changeStatus(StatusCustomer statusCustomer) {
+        if (statusCustomer == null) {
+            throw new BusinessException("O status do cliente é obrigatório.");
+        }
         if (this.statusCustomer == statusCustomer) {
             return;
         }

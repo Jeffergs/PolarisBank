@@ -1,0 +1,85 @@
+package com.polarisbank.customer.service;
+
+import com.polarisbank.customer.dto.CustomerRequest;
+import com.polarisbank.customer.entity.Customer;
+import com.polarisbank.customer.exception.BusinessException;
+import com.polarisbank.customer.repository.CustomerRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@SpringBootTest
+@Testcontainers
+@Transactional
+class CustomerServiceIntegrationTest {
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("polaris_bank_test")
+            .withUsername("test")
+            .withPassword("test");
+
+    @Test
+    void shouldRejectCustomerRegistrationWhenCpfAlreadyExists() {
+        Customer existingCustomer = new Customer(
+                "Cliente Existente",
+                "52998224725",
+                "existente@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        customerRepository.saveAndFlush(existingCustomer);
+
+        CustomerRequest request = new CustomerRequest(
+                "Novo Cliente",
+                "52998224725",
+                "novo@example.com",
+                LocalDate.of(1990, 8, 10)
+        );
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.createCustomer(request)
+        );
+    }
+
+    @Test
+    void shouldRejectCustomerRegistrationWhenEmailAlreadyExists() {
+        Customer existingCustomer = new Customer(
+                "Cliente Existente",
+                "98765432100",
+                "outro@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        customerRepository.saveAndFlush(existingCustomer);
+
+        CustomerRequest request = new CustomerRequest(
+                "Novo Cliente",
+                "52998224725",
+                "OUTRO@example.com",
+                LocalDate.of(1990, 8, 10)
+        );
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.createCustomer(request)
+        );
+    }
+}

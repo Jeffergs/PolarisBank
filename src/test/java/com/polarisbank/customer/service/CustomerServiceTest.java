@@ -80,6 +80,8 @@ class CustomerServiceTest {
         assertEquals(request.cpf(), customer.getCpf());
         assertEquals(request.email(), customer.getEmail());
         assertEquals(request.birthDate(), customer.getBirthDate());
+        verify(customerRepository).existsByCpf(request.cpf());
+        verify(customerRepository).existsByEmailIgnoreCase(request.email());
     }
 
     @Test

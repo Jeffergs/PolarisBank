@@ -99,7 +99,92 @@
             assertEquals(originalUpdatedAt, customer.getUpdatedAt());
         }
 
+        @Test
+        void shouldRejectCustomerWithNullName() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            null,
+                            "52998224725",
+                            "jefferson@example.com",
+                            parseBirthDate("20/05/1995")
+                    )
+            );
+        }
 
+        @Test
+        void shouldRejectCustomerWithBlankName() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            "   ",
+                            "52998224725",
+                            "jefferson@example.com",
+                            parseBirthDate("20/05/1995")
+                    )
+            );
+        }
 
+        @Test
+        void shouldRejectCustomerWithInvalidCpf() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            "Jefferson Gomes",
+                            "52998224724",
+                            "jefferson@example.com",
+                            parseBirthDate("20/05/1995")
+                    )
+            );
+        }
+
+        @Test
+        void shouldRejectCustomerWithFutureBirthDate() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            "Jefferson Gomes",
+                            "52998224725",
+                            "jefferson@example.com",
+                            LocalDate.now().plusDays(1)
+                    )
+            );
+        }
+
+        @Test
+        void shouldRejectNullStatus() {
+            Customer customer = new Customer(
+                    "Jefferson Gomes",
+                    "52998224725",
+                    "jefferson@example.com",
+                    parseBirthDate("20/05/1995")
+            );
+
+            assertThrows(
+                    BusinessException.class,
+                    () -> customer.changeStatus(null)
+            );
+        }
+
+        @Test
+        void shouldRejectCustomerWithoutEmail() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer("Cliente Um", "52998224725", null, parseBirthDate("20/05/1995"))
+            );
+        }
+
+        @Test
+        void shouldRejectCustomerWithBlankEmail() {
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            "Cliente Um",
+                            "52998224725",
+                            "   ",
+                            parseBirthDate("20/05/1995")
+                    )
+            );
+        }
     }
 
