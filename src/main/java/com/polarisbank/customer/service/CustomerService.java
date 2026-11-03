@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 @Service
@@ -20,6 +22,7 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
+    @Transactional
     public void createCustomer(CustomerRequest request) {
         if (customerRepository.existsByCpf(request.cpf())) {
             throw new BusinessException("CPF já cadastrado.");
@@ -45,6 +48,7 @@ public class CustomerService {
         return customerRepository.findAll(pageable);
     }
 
+    @Transactional
     public void changeCustomerStatus(UUID customerId, StatusCustomer newStatus) {
         if (newStatus == null) {
             throw new BusinessException("O status do cliente é obrigatório.");
