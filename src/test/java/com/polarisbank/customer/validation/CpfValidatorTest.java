@@ -44,4 +44,16 @@ class CpfValidatorTest {
         assertFalse(validator.isValid("5299822472A"));
     }
 
+    @Test
+    void rejectCpfWithMoreThanElevenDigits() {
+        var validator = new CpfValidator();
+        assertFalse(validator.isValid("529982247250"));
+    }
+
+    @Test
+    void rejectCpfContainingSpecialCharacters() {
+        var validator = new CpfValidator();
+        assertFalse(validator.isValid("529.982.247-25"));
+    }
+
 }
