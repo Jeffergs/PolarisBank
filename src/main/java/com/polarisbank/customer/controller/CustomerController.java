@@ -1,14 +1,14 @@
 package com.polarisbank.customer.controller;
 
 import com.polarisbank.customer.dto.CustomerRequest;
+import com.polarisbank.customer.dto.CustomerResponse;
+import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.service.CustomerService;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -23,6 +23,20 @@ public class CustomerController {
     @ResponseStatus(HttpStatus.CREATED)
     public void createCustomer(@Valid @RequestBody CustomerRequest request) {
         customerService.createCustomer(request);
+    }
+
+    @GetMapping("/{customerId}")
+    public CustomerResponse findCustomerById(@PathVariable UUID customerId) {
+        Customer customer = customerService.findCustomerById(customerId);
+
+        return new CustomerResponse(
+                customer.getIdCustomer(),
+                customer.getFullName(),
+                customer.getCpf(),
+                customer.getEmail(),
+                customer.getBirthDate(),
+                customer.getStatusCustomer()
+        );
     }
 
 }
