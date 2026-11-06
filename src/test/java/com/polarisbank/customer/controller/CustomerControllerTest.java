@@ -2,7 +2,8 @@ package com.polarisbank.customer.controller;
 
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
-import com.polarisbank.customer.exception.BusinessException;
+import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
+import com.polarisbank.customer.exception.CustomerNotFoundException;
 import com.polarisbank.customer.service.CustomerService;
 import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -82,9 +82,87 @@ class CustomerControllerTest {
         UUID customerId = UUID.randomUUID();
 
         when(customerService.findCustomerById(customerId))
-                .thenThrow(new BusinessException("Cliente não encontrado."));
+                .thenThrow(new CustomerNotFoundException("Cliente não encontrado."));
 
         mockMvc.perform(get("/api/customers/{customerId}", customerId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturnConflictWhenCpfAlreadyExists() throws Exception {
+        String request = """
+            {
+                "fullName": "Cliente Teste",
+                "cpf": "52998224725",
+                "email": "cliente@example.com",
+                "birthDate": "20/05/1995"
+            }
+            """;
+
+        doThrow(new CustomerAlreadyExistsException("CPF já cadastrado."))
+                .when(customerService).createCustomer(any(CustomerRequest.class));
+
+        mockMvc.perform(post("/api/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnConflictWhenEmailAlreadyExists() throws Exception {
+        String request = """
+            {
+                "fullName": "Cliente Teste",
+                "cpf": "52998224725",
+                "email": "cliente@example.com",
+                "birthDate": "20/05/1995"
+            }
+            """;
+
+        doThrow(new CustomerAlreadyExistsException("Email já cadastrado."))
+                .when(customerService).createCustomer(any(CustomerRequest.class));
+
+        mockMvc.perform(post("/api/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenFullNameIsBlank() throws Exception {
+        String request = """
+            {
+                "fullName": "",
+                "cpf": "52998224725",
+                "email": "cliente@example.com",
+                "birthDate": "20/05/1995"
+            }
+            """;
+
+        mockMvc.perform(post("/api/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verify(customerService, never()).createCustomer(any(CustomerRequest.class));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCpfHasInvalidFormat() throws Exception {
+        String request = """
+            {
+                "fullName": "Cliente Teste",
+                "cpf": "123",
+                "email": "cliente@example.com",
+                "birthDate": "20/05/1995"
+            }
+            """;
+
+        mockMvc.perform(post("/api/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verify(customerService, never()).createCustomer(any(CustomerRequest.class));
     }
 }
