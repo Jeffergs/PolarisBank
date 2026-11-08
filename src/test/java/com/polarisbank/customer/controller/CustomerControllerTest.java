@@ -165,4 +165,23 @@ class CustomerControllerTest {
 
         verify(customerService, never()).createCustomer(any(CustomerRequest.class));
     }
+
+    @Test
+    void shouldReturnBadRequestWhenEmailIsBlank() throws Exception {
+        String request = """
+            {
+                "fullName": "Cliente Teste",
+                "cpf": "52998224725",
+                "email": "",
+                "birthDate": "20/05/1995"
+            }
+            """;
+
+        mockMvc.perform(post("/api/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verify(customerService, never()).createCustomer(any(CustomerRequest.class));
+    }
 }
