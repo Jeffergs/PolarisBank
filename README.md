@@ -1,6 +1,6 @@
-# PolarisBank – FinCore
+# PolarisBank 
 
-O **PolarisBank – FinCore** é um projeto de backend desenvolvido em Java com Spring Boot, cujo objetivo é implementar o núcleo de operações de um sistema bancário, contemplando funcionalidades como gerenciamento de clientes, contas e movimentações financeiras.
+O **PolarisBank** é um projeto de backend desenvolvido em Java com Spring Boot, cujo objetivo é implementar o núcleo de operações de um sistema bancário, contemplando funcionalidades como gerenciamento de clientes, contas e movimentações financeiras.
 
 O projeto adota uma arquitetura de **monólito modular**, com separação de responsabilidades por domínio, buscando organização, manutenibilidade e consistência das operações financeiras.
 
