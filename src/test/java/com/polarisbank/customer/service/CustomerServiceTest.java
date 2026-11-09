@@ -3,6 +3,8 @@ package com.polarisbank.customer.service;
 import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
+import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
+import com.polarisbank.customer.exception.CustomerNotFoundException;
 import com.polarisbank.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +58,7 @@ class CustomerServiceTest {
     @Test
     void shouldRejectCustomerRegistrationWhenCpfAlreadyExists() {
         when(customerRepository.existsByCpf(request.cpf())).thenReturn(true);
-        assertThrows(BusinessException.class,() -> customerService.createCustomer(request));
+        assertThrows(CustomerAlreadyExistsException.class,() -> customerService.createCustomer(request));
         verify(customerRepository, never()).existsByEmailIgnoreCase(anyString());
         verify(customerRepository).existsByCpf(request.cpf());
         verify(customerRepository, never()).save(any(Customer.class));
@@ -90,7 +92,7 @@ class CustomerServiceTest {
         when(customerRepository.existsByEmailIgnoreCase(request.email())).thenReturn(true);
 
         assertThrows(
-                BusinessException.class,
+                CustomerAlreadyExistsException.class,
                 () -> customerService.createCustomer(request)
         );
 
@@ -120,7 +122,7 @@ class CustomerServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                BusinessException.class,
+                CustomerNotFoundException.class,
                 () -> customerService.findCustomerById(customerId)
         );
 

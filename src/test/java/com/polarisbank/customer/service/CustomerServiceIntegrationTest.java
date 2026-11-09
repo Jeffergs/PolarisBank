@@ -2,7 +2,7 @@ package com.polarisbank.customer.service;
 
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
-import com.polarisbank.customer.exception.BusinessException;
+import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ class CustomerServiceIntegrationTest {
         );
 
         assertThrows(
-                BusinessException.class,
+                CustomerAlreadyExistsException.class,
                 () -> customerService.createCustomer(request)
         );
     }
@@ -78,7 +78,7 @@ class CustomerServiceIntegrationTest {
         );
 
         assertThrows(
-                BusinessException.class,
+                CustomerAlreadyExistsException.class,
                 () -> customerService.createCustomer(request)
         );
     }
