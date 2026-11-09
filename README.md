@@ -20,7 +20,6 @@ O desenvolvimento do PolarisBank está dividido em três fases, com evolução p
 ### Fase 2 — Segurança e confiabilidade
 
 - Implementação de autenticação e mecanismos de segurança.
-- Aprimoramento das validações e do tratamento de exceções.
 - Containerização da aplicação com Docker.
 - Implementação de mecanismos para lidar com concorrência.
 - Evolução das operações financeiras, priorizando confiabilidade e integridade dos dados.
@@ -105,7 +104,7 @@ O módulo contempla as estruturas de contas contábeis, lançamentos e transaç�
 - PostgreSQL
 - Flyway
 
-### Documentação da API
+### Documentação da API - Pendente
 
 - SpringDoc OpenAPI
 - Swagger UI
@@ -205,7 +204,7 @@ CREATE DATABASE polaris_bank;
 
 ### 3. Configurar as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+Na raiz do projeto, crie um arquivo `.env` com as seguintes variáveis:
 
 ```env
 DATABASE_URL=jdbc:postgresql://localhost:5432/polaris_bank
@@ -217,21 +216,35 @@ Substitua os valores pelas credenciais e configurações do seu ambiente.
 
 ### 4. Executar a aplicação
 
+**Importante:** os comandos abaixo devem ser executados no terminal do sistema operacional (Terminal do IntelliJ IDEA, VS Code, PowerShell, CMD ou terminal Linux), estando na raiz do projeto, onde se encontra o arquivo `gradlew` ou `gradlew.bat`.
+
+Não execute esses comandos no console SQL do PostgreSQL.
+
+**Windows (PowerShell ou CMD):**
+
+```powershell
+.\gradlew.bat bootRun
+```
+
 **Linux:**
 
 ```bash
 ./gradlew bootRun
 ```
 
-**Windows:**
-
-```bash
-gradlew.bat bootRun
-```
+Esse comando compila e inicia a aplicação Spring Boot.
 
 As migrations do Flyway são executadas durante a inicialização da aplicação.
 
 ### 5. Executar os testes
+
+Abra um terminal na raiz do projeto. Os testes podem ser executados com a aplicação em funcionamento ou interrompida, desde que os serviços necessários aos testes estejam disponíveis.
+
+**Windows (PowerShell ou CMD):**
+
+```powershell
+.\gradlew.bat test
+```
 
 **Linux:**
 
@@ -239,10 +252,12 @@ As migrations do Flyway são executadas durante a inicialização da aplicação
 ./gradlew test
 ```
 
-**Windows:**
+O Gradle executará os testes automatizados e apresentará o resultado no terminal.
 
-```bash
-gradlew.bat test
+Os relatórios de execução dos testes ficam disponíveis em:
+
+```text
+build/reports/tests/test/index.html
 ```
 
 ## Roadmap
@@ -257,7 +272,6 @@ gradlew.bat test
 ### Fase 2 — Segurança e confiabilidade
 
 - [ ] Implementação de autenticação e mecanismos de segurança.
-- [ ] Aprimoramento das validações e do tratamento de exceções.
 - [ ] Containerização da aplicação com Docker.
 - [ ] Implementação de mecanismos de controle de concorrência.
 - [ ] Evolução dos mecanismos de confiabilidade e integridade financeira.
