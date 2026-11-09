@@ -10,10 +10,7 @@ CREATE TABLE customers (
                            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
                            CONSTRAINT chk_customer_cpf_format
-                               CHECK (cpf ~ '^[0-9]{11}$'),
-
-    CONSTRAINT chk_customer_birth_date
-        CHECK (birth_date <= CURRENT_DATE)
+                               CHECK (cpf ~ '^[0-9]{11}$')
 );
 
 CREATE TABLE accounts (
@@ -80,7 +77,7 @@ CREATE TABLE ledger_entries (
                                     CHECK (amount > 0),
                                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-                                CONSTRAINT fk_entry_transaction
+                                CONSTRAINT fk_entry_ledger_transaction
                                     FOREIGN KEY (id_ledger_transaction)
                                         REFERENCES ledger_transactions (id_ledger_transaction),
 
@@ -97,7 +94,7 @@ CREATE TABLE ledger_entries (
 CREATE INDEX idx_accounts_customer
     ON accounts (id_customer);
 
-CREATE INDEX idx_entries_transaction
+CREATE INDEX idx_entries_ledger_transaction
     ON ledger_entries (id_ledger_transaction);
 
 CREATE INDEX idx_entries_ledger_account
