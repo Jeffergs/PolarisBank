@@ -5,6 +5,8 @@ import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
 import com.polarisbank.customer.service.CustomerService;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -183,5 +187,76 @@ class CustomerControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(customerService, never()).createCustomer(any(CustomerRequest.class));
+    }
+
+    @Test
+    void shouldReturnCustomersWithPagination() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        Customer customer = new Customer(
+                "Cliente Teste",
+                "52998224725",
+                "cliente@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        ReflectionTestUtils.setField(customer, "idCustomer", customerId);
+
+        Page<Customer> customerPage = new PageImpl<>(
+                List.of(customer),
+                PageRequest.of(0, 10),
+                1
+        );
+
+        when(customerService.findAllCustomers(any(Pageable.class)))
+                .thenReturn(customerPage);
+
+        mockMvc.perform(get("/api/customers")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].idCustomer").value(customerId.toString()))
+                .andExpect(jsonPath("$.content[0].fullName").value("Cliente Teste"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoCustomersExist() throws Exception {
+        Page<Customer> emptyPage = Page.empty(PageRequest.of(0, 10));
+
+        when(customerService.findAllCustomers(any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/customers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
+    }
+
+    @Test
+    void shouldPassSortingParametersToService() throws Exception {
+        when(customerService.findAllCustomers(any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 10, Sort.by("fullName").ascending())));
+
+        mockMvc.perform(get("/api/customers")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "fullName,asc"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        verify(customerService).findAllCustomers(pageableCaptor.capture());
+
+        Pageable pageable = pageableCaptor.getValue();
+
+        assertEquals(0, pageable.getPageNumber());
+        assertEquals(10, pageable.getPageSize());
+        assertEquals(Sort.Direction.ASC, pageable.getSort().getOrderFor("fullName").getDirection());
     }
 }

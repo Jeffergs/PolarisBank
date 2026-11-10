@@ -4,6 +4,8 @@ import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.dto.CustomerResponse;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.service.CustomerService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,19 @@ public class CustomerController {
                 customer.getBirthDate(),
                 customer.getStatusCustomer()
         );
+    }
+
+    @GetMapping
+    public Page<CustomerResponse> findAllCustomers(Pageable pageable) {
+        return customerService.findAllCustomers(pageable)
+                .map(customer -> new CustomerResponse(
+                        customer.getIdCustomer(),
+                        customer.getFullName(),
+                        customer.getCpf(),
+                        customer.getEmail(),
+                        customer.getBirthDate(),
+                        customer.getStatusCustomer()
+                ));
     }
 
 }
