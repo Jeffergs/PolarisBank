@@ -1,5 +1,6 @@
 package com.polarisbank.customer.controller;
 
+import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
@@ -22,8 +23,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -259,4 +259,57 @@ class CustomerControllerTest {
         assertEquals(10, pageable.getPageSize());
         assertEquals(Sort.Direction.ASC, pageable.getSort().getOrderFor("fullName").getDirection());
     }
+
+    @Test
+    void shouldReturnNoContentWhenCustomerStatusIsChanged() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/customers/{customerId}/status", customerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "statusCustomer": "INACTIVE"
+                            }
+                            """))
+                .andExpect(status().isNoContent());
+
+        verify(customerService).changeCustomerStatus(customerId, StatusCustomer.INACTIVE);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenStatusIsNull() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/customers/{customerId}/status", customerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "statusCustomer": null
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+
+        verify(customerService, never())
+                .changeCustomerStatus(any(UUID.class), any(StatusCustomer.class));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenChangingStatusOfNonexistentCustomer() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        doThrow(new CustomerNotFoundException("Cliente não encontrado."))
+                .when(customerService)
+                .changeCustomerStatus(customerId, StatusCustomer.INACTIVE);
+
+        mockMvc.perform(patch("/api/customers/{customerId}/status", customerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "statusCustomer": "INACTIVE"
+                            }
+                            """))
+                .andExpect(status().isNotFound());
+    }
+
+
 }

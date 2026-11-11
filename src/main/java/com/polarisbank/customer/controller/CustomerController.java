@@ -2,6 +2,7 @@ package com.polarisbank.customer.controller;
 
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.dto.CustomerResponse;
+import com.polarisbank.customer.dto.CustomerStatusRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.service.CustomerService;
 import org.springframework.data.domain.Page;
@@ -52,6 +53,15 @@ public class CustomerController {
                         customer.getBirthDate(),
                         customer.getStatusCustomer()
                 ));
+    }
+
+    @PatchMapping("/{customerId}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeCustomerStatus(
+            @PathVariable UUID customerId,
+            @Valid @RequestBody CustomerStatusRequest request) {
+
+        customerService.changeCustomerStatus(customerId, request.statusCustomer());
     }
 
 }
