@@ -1,5 +1,6 @@
 package com.polarisbank.customer.service;
 
+import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
@@ -15,6 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
@@ -81,5 +83,30 @@ class CustomerServiceIntegrationTest {
                 CustomerAlreadyExistsException.class,
                 () -> customerService.createCustomer(request)
         );
+    }
+
+    @Test
+    void shouldPersistCustomerStatusChange() {
+        Customer customer = new Customer(
+                "Cliente Teste",
+                "52998224725",
+                "cliente@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        Customer savedCustomer = customerRepository.saveAndFlush(customer);
+
+        customerService.changeCustomerStatus(
+                savedCustomer.getIdCustomer(),
+                StatusCustomer.BLOCKED
+        );
+
+        customerRepository.flush();
+
+        Customer updatedCustomer = customerRepository
+                .findById(savedCustomer.getIdCustomer())
+                .orElseThrow();
+
+        assertEquals(StatusCustomer.BLOCKED, updatedCustomer.getStatusCustomer());
     }
 }

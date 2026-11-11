@@ -179,4 +179,40 @@ class CustomerServiceTest {
         assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
     }
 
+    @Test
+    void shouldThrowExceptionWhenChangingStatusOfBlockedCustomer() {
+        UUID customerId = UUID.randomUUID();
+
+        customer.changeStatus(StatusCustomer.BLOCKED);
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.changeCustomerStatus(customerId, StatusCustomer.ACTIVE)
+        );
+
+        assertEquals(StatusCustomer.BLOCKED, customer.getStatusCustomer());
+        verify(customerRepository).findById(customerId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenChangingBlockedCustomerToInactive() {
+        UUID customerId = UUID.randomUUID();
+
+        customer.changeStatus(StatusCustomer.BLOCKED);
+
+        when(customerRepository.findById(customerId))
+                .thenReturn(Optional.of(customer));
+
+        assertThrows(
+                BusinessException.class,
+                () -> customerService.changeCustomerStatus(customerId, StatusCustomer.INACTIVE)
+        );
+
+        assertEquals(StatusCustomer.BLOCKED, customer.getStatusCustomer());
+        verify(customerRepository).findById(customerId);
+    }
+
 }

@@ -311,5 +311,20 @@ class CustomerControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void shouldReturnNoContentWhenCustomerIsBlocked() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/customers/{customerId}/status", customerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "statusCustomer": "BLOCKED"
+                            }
+                            """))
+                .andExpect(status().isNoContent());
+
+        verify(customerService).changeCustomerStatus(customerId, StatusCustomer.BLOCKED);
+    }
 
 }
