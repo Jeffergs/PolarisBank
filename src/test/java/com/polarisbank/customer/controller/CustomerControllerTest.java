@@ -7,12 +7,16 @@ import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
 import com.polarisbank.customer.service.CustomerService;
-import org.mockito.ArgumentCaptor;
-import org.springframework.data.domain.*;
-import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,7 +56,16 @@ class CustomerControllerTest {
                         .content(request))
                 .andExpect(status().isCreated());
 
-        verify(customerService).createCustomer(any(CustomerRequest.class));
+        ArgumentCaptor<CustomerRequest> captor = ArgumentCaptor.forClass(CustomerRequest.class);
+
+        verify(customerService).createCustomer(captor.capture());
+
+        CustomerRequest capturedRequest = captor.getValue();
+
+        assertEquals("Jefferson Gomes", capturedRequest.fullName());
+        assertEquals("52998224725", capturedRequest.cpf());
+        assertEquals("jefferson@example.com", capturedRequest.email());
+        assertEquals(LocalDate.of(1995, 5, 20), capturedRequest.birthDate());
     }
 
     @Test
@@ -62,7 +75,7 @@ class CustomerControllerTest {
                 "Cliente Teste",
                 "52998224725",
                 "cliente@example.com",
-                LocalDate.of(1995,      5, 20)
+                LocalDate.of(1995,5,20)
         );
 
         ReflectionTestUtils.setField(customer, "idCustomer", customerId);
@@ -110,6 +123,8 @@ class CustomerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());
+
+        verify(customerService).createCustomer(any(CustomerRequest.class));
     }
 
     @Test
@@ -130,6 +145,8 @@ class CustomerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isConflict());
+
+        verify(customerService).createCustomer(any(CustomerRequest.class));
     }
 
     @Test
@@ -222,6 +239,15 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.number").value(0))
                 .andExpect(jsonPath("$.size").value(10));
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+
+        verify(customerService).findAllCustomers(captor.capture());
+
+        Pageable capturedPageable = captor.getValue();
+
+        assertEquals(0, capturedPageable.getPageNumber());
+        assertEquals(10, capturedPageable.getPageSize());
     }
 
     @Test
@@ -236,12 +262,17 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$.content").isEmpty())
                 .andExpect(jsonPath("$.totalElements").value(0))
                 .andExpect(jsonPath("$.totalPages").value(0));
+
+        verify(customerService).findAllCustomers(any(Pageable.class));
     }
 
     @Test
     void shouldPassSortingParametersToService() throws Exception {
         when(customerService.findAllCustomers(any(Pageable.class)))
-                .thenReturn(Page.empty(PageRequest.of(0, 10, Sort.by("fullName").ascending())));
+                .thenReturn(Page.empty(PageRequest.of(
+                        0,
+                        10,
+                        Sort.by("fullName").ascending())));
 
         mockMvc.perform(get("/api/customers")
                         .param("page", "0")
@@ -309,6 +340,8 @@ class CustomerControllerTest {
                             }
                             """))
                 .andExpect(status().isNotFound());
+
+        verify(customerService).changeCustomerStatus(customerId, StatusCustomer.INACTIVE);
     }
 
     @Test
@@ -344,6 +377,8 @@ class CustomerControllerTest {
                             """))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().string("Cliente bloqueado não pode ter o status alterado."));
+
+        verify(customerService).changeCustomerStatus(customerId, StatusCustomer.ACTIVE);
     }
 
 }
