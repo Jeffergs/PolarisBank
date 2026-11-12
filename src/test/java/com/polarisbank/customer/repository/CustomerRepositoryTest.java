@@ -1,20 +1,22 @@
 package com.polarisbank.customer.repository;
 
 import com.polarisbank.customer.StatusCustomer;
-import com.polarisbank.customer.exception.BusinessException;
+import com.polarisbank.customer.entity.Customer;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import com.polarisbank.customer.entity.Customer;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-
 class CustomerRepositoryTest {
     @Autowired
     private CustomerRepository customerRepository;
@@ -30,8 +31,14 @@ class CustomerRepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private LocalDate parseBirthDate(String date) {
-        return LocalDate.parse(date, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        return LocalDate.parse(date, DATE_FORMATTER);
     }
 
     @Container
@@ -43,10 +50,17 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldSaveAndFindCustomer() {
-        Customer customer = new Customer("Jefferson Gomes", "52998224725", "jefferson@example.com", parseBirthDate("20/05/1995"));
+        Customer customer = new Customer(
+                "Jefferson Gomes",
+                "52998224725",
+                "jefferson@example.com",
+                parseBirthDate("20/05/1995")
+        );
 
-        Customer savedCustomer = customerRepository.save(customer);
-        Customer foundCustomer = customerRepository.findById(savedCustomer.getIdCustomer()).orElseThrow();
+        Customer savedCustomer = customerRepository.saveAndFlush(customer);
+        Customer foundCustomer = customerRepository
+                .findById(savedCustomer.getIdCustomer())
+                .orElseThrow();
 
         assertEquals("Jefferson Gomes", foundCustomer.getFullName());
         assertEquals("52998224725", foundCustomer.getCpf());
@@ -57,17 +71,34 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldRejectDuplicateCpf() {
-        Customer firstCustomer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
-        Customer secondCustomer = new Customer("Cliente Dois", "52998224725", "cliente2@example.com", parseBirthDate("10/08/1990"));
+        Customer firstCustomer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        Customer secondCustomer = new Customer(
+                "Cliente Dois",
+                "52998224725",
+                "cliente2@example.com",
+                parseBirthDate("10/08/1990")
+        );
 
         customerRepository.saveAndFlush(firstCustomer);
 
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(secondCustomer));
+        assertThrows(DataIntegrityViolationException.class,
+                () -> customerRepository.saveAndFlush(secondCustomer));
     }
 
     @Test
     void shouldReturnTrueWhenCpfExists() {
-        Customer customer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
+        Customer customer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
 
         customerRepository.saveAndFlush(customer);
 
@@ -81,8 +112,19 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldFindAllCustomers() {
-        Customer firstCustomer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
-        Customer secondCustomer = new Customer("Cliente Dois", "98765432100", "cliente2@example.com", parseBirthDate("10/08/1990"));
+        Customer firstCustomer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        Customer secondCustomer = new Customer(
+                "Cliente Dois",
+                "98765432100",
+                "cliente2@example.com",
+                parseBirthDate("10/08/1990")
+        );
 
         customerRepository.save(firstCustomer);
         customerRepository.save(secondCustomer);
@@ -92,8 +134,19 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldCountCustomers() {
-        Customer firstCustomer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
-        Customer secondCustomer = new Customer("Cliente Dois", "98765432100", "cliente2@example.com", parseBirthDate("10/08/1990"));
+        Customer firstCustomer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        Customer secondCustomer = new Customer(
+                "Cliente Dois",
+                "98765432100",
+                "cliente2@example.com",
+                parseBirthDate("10/08/1990")
+        );
 
         customerRepository.save(firstCustomer);
         customerRepository.save(secondCustomer);
@@ -103,7 +156,12 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldReturnTrueWhenCustomerIdExists() {
-        Customer customer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
+        Customer customer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
 
         Customer savedCustomer = customerRepository.saveAndFlush(customer);
 
@@ -117,24 +175,47 @@ class CustomerRepositoryTest {
 
     @Test
     void shouldPersistCustomerStatusChange() {
-        Customer customer = new Customer("Cliente Um", "52998224725", "cliente1@example.com", parseBirthDate("20/05/1995"));
+        Customer customer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente1@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
         Customer savedCustomer = customerRepository.saveAndFlush(customer);
 
         savedCustomer.changeStatus(StatusCustomer.INACTIVE);
 
-        Customer foundCustomer = customerRepository.findById(savedCustomer.getIdCustomer()).orElseThrow();
+        customerRepository.flush();
+        entityManager.clear();
+
+        Customer foundCustomer = customerRepository
+                .findById(savedCustomer.getIdCustomer())
+                .orElseThrow();
 
         assertEquals(StatusCustomer.INACTIVE, foundCustomer.getStatusCustomer());
     }
 
     @Test
     void shouldRejectDuplicateEmail() {
-        Customer firstCustomer = new Customer("Cliente Um", "52998224725", "cliente@example.com", parseBirthDate("20/05/1995"));
-        Customer secondCustomer = new Customer("Cliente Dois", "98765432100", "CLIENTE@example.com", parseBirthDate("10/08/1990"));
+        Customer firstCustomer = new Customer(
+                "Cliente Um",
+                "52998224725",
+                "cliente@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        Customer secondCustomer = new Customer(
+                "Cliente Dois",
+                "98765432100",
+                "CLIENTE@example.com",
+                parseBirthDate("10/08/1990")
+        );
 
         customerRepository.saveAndFlush(firstCustomer);
 
-        assertThrows(DataIntegrityViolationException.class, () -> customerRepository.saveAndFlush(secondCustomer));
+        assertThrows(DataIntegrityViolationException.class,
+                () -> customerRepository.saveAndFlush(secondCustomer));
     }
 
     @Test
