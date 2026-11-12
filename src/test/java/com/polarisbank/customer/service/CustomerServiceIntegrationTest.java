@@ -5,6 +5,8 @@ import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.repository.CustomerRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +31,9 @@ class CustomerServiceIntegrationTest {
 
     @Autowired
     private CustomerService customerService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Container
     @ServiceConnection
@@ -95,6 +100,7 @@ class CustomerServiceIntegrationTest {
         );
 
         Customer savedCustomer = customerRepository.saveAndFlush(customer);
+        entityManager.clear();
 
         customerService.changeCustomerStatus(
                 savedCustomer.getIdCustomer(),
