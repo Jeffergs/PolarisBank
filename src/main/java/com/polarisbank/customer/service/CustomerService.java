@@ -5,12 +5,12 @@ import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
-import com.polarisbank.customer.repository.CustomerRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Service;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
+import com.polarisbank.customer.repository.CustomerRepository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;

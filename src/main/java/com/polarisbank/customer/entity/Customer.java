@@ -52,7 +52,7 @@ public class Customer {
         if (fullName.length() > 150) {
             throw new BusinessException("O nome deve ter no máximo 150 caracteres.");
         }
-        this.fullName = fullName;
+        this.fullName = fullName.trim();
         if (!new CpfValidator().isValid(cpf)) {
             throw new BusinessException("CPF inválido.");
         }
