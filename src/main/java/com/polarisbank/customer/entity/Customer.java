@@ -49,6 +49,9 @@ public class Customer {
         if (fullName == null || fullName.isBlank()) {
             throw new BusinessException("Nome é obrigatório.");
         }
+        if (fullName.length() > 150) {
+            throw new BusinessException("O nome deve ter no máximo 150 caracteres.");
+        }
         this.fullName = fullName;
         if (!new CpfValidator().isValid(cpf)) {
             throw new BusinessException("CPF inválido.");

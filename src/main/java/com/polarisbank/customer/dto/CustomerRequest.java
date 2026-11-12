@@ -8,6 +8,7 @@ import java.time.LocalDate;
 
 public record CustomerRequest(
         @NotBlank (message = "Nome é obrigatório")
+        @Size(max = 150, message = "O nome deve ter no máximo 150 caracteres")
         String fullName,
 
         @NotBlank(message = "O CPF é obrigatório")

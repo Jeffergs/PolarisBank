@@ -186,5 +186,20 @@
                     )
             );
         }
+
+        @Test
+        void shouldThrowExceptionWhenFullNameExceeds150Characters() {
+            String fullName = "A".repeat(151);
+
+            assertThrows(
+                    BusinessException.class,
+                    () -> new Customer(
+                            fullName,
+                            "52998224725",
+                            "cliente@example.com",
+                            LocalDate.of(1995, 5, 20)
+                    )
+            );
+        }
     }
 

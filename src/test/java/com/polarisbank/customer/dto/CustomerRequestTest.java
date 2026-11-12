@@ -152,4 +152,38 @@ public class CustomerRequestTest {
         assertTrue(validator.validate(request).isEmpty());
     }
 
+    @Test
+    void acceptFullNameWith150Characters() {
+        String fullName = "A".repeat(150);
+
+        var request = new CustomerRequest(
+                fullName,
+                "52998224725",
+                "jefferson@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        assertTrue(validator.validate(request).isEmpty());
+    }
+
+    @Test
+    void rejectFullNameWithMoreThan150Characters() {
+        String fullName = "A".repeat(151);
+
+        var request = new CustomerRequest(
+                fullName,
+                "52998224725",
+                "jefferson@example.com",
+                parseBirthDate("20/05/1995")
+        );
+
+        var violations = validator.validate(request);
+
+        assertEquals(1, violations.size());
+        assertEquals(
+                "O nome deve ter no máximo 150 caracteres",
+                violations.iterator().next().getMessage()
+        );
+    }
+
 }

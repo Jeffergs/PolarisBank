@@ -3,6 +3,7 @@ package com.polarisbank.customer.controller;
 import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
+import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
 import com.polarisbank.customer.service.CustomerService;
@@ -24,8 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CustomerController.class)
 class CustomerControllerTest {
@@ -325,6 +325,25 @@ class CustomerControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(customerService).changeCustomerStatus(customerId, StatusCustomer.BLOCKED);
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenChangingStatusOfBlockedCustomer() throws Exception {
+        UUID customerId = UUID.randomUUID();
+
+        doThrow(new BusinessException("Cliente bloqueado não pode ter o status alterado."))
+                .when(customerService)
+                .changeCustomerStatus(customerId, StatusCustomer.ACTIVE);
+
+        mockMvc.perform(patch("/api/customers/{customerId}/status", customerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "statusCustomer": "ACTIVE"
+                            }
+                            """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().string("Cliente bloqueado não pode ter o status alterado."));
     }
 
 }
