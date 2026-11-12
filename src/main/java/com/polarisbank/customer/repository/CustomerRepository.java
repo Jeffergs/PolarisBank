@@ -1,6 +1,7 @@
 package com.polarisbank.customer.repository;
 
 import com.polarisbank.customer.entity.Customer;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
@@ -8,4 +9,5 @@ import java.util.UUID;
 public interface CustomerRepository extends JpaRepository <Customer, UUID> {
     boolean existsByCpf(String cpf);
     boolean existsByEmailIgnoreCase(String email);
+    Optional<Customer> findByCpf(String cpf);
 }

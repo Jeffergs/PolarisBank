@@ -18,8 +18,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
@@ -108,11 +107,34 @@ class CustomerServiceIntegrationTest {
         );
 
         customerRepository.flush();
+        entityManager.clear();
 
         Customer updatedCustomer = customerRepository
                 .findById(savedCustomer.getIdCustomer())
                 .orElseThrow();
 
         assertEquals(StatusCustomer.BLOCKED, updatedCustomer.getStatusCustomer());
+    }
+
+    @Test
+    void shouldPersistCustomerWhenRegistrationIsSuccessful() {
+        CustomerRequest request = new CustomerRequest(
+                "Novo Cliente",
+                "52998224725",
+                "novo@example.com",
+                LocalDate.of(1990, 8, 10)
+        );
+
+        customerService.createCustomer(request);
+
+        Customer savedCustomer = customerRepository
+                .findByCpf(request.cpf())
+                .orElseThrow();
+
+        assertEquals(request.fullName(), savedCustomer.getFullName());
+        assertEquals(request.cpf(), savedCustomer.getCpf());
+        assertEquals(request.email(), savedCustomer.getEmail());
+        assertEquals(request.birthDate(), savedCustomer.getBirthDate());
+        assertEquals(StatusCustomer.ACTIVE, savedCustomer.getStatusCustomer());
     }
 }
