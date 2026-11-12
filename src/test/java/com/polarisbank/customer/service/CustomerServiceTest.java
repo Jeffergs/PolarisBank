@@ -5,6 +5,7 @@ import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
+import com.polarisbank.customer.exception.DatabaseExceptionHandler;
 import com.polarisbank.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.polarisbank.customer.exception.BusinessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,9 @@ class CustomerServiceTest {
 
     @Mock
     private CustomerRepository customerRepository;
+
+    @Mock
+    private DatabaseExceptionHandler databaseExceptionHandler;
 
     @InjectMocks
     private CustomerService customerService;
@@ -61,7 +66,7 @@ class CustomerServiceTest {
         assertThrows(CustomerAlreadyExistsException.class,() -> customerService.createCustomer(request));
         verify(customerRepository).existsByCpf(request.cpf());
         verify(customerRepository, never()).existsByEmailIgnoreCase(anyString());
-        verify(customerRepository, never()).save(any(Customer.class));
+        verify(customerRepository, never()).saveAndFlush(any(Customer.class));
     }
 
 
@@ -74,7 +79,7 @@ class CustomerServiceTest {
 
         ArgumentCaptor<Customer> captor = ArgumentCaptor.forClass(Customer.class);
 
-        verify(customerRepository).save(captor.capture());
+        verify(customerRepository).saveAndFlush(captor.capture());
 
         Customer savedCustomer = captor.getValue();
 
@@ -100,7 +105,7 @@ class CustomerServiceTest {
 
         verify(customerRepository).existsByCpf(request.cpf());
         verify(customerRepository).existsByEmailIgnoreCase(request.email());
-        verify(customerRepository, never()).save(any(Customer.class));
+        verify(customerRepository, never()).saveAndFlush(any(Customer.class));
     }
 
     @Test
@@ -217,5 +222,63 @@ class CustomerServiceTest {
         assertEquals(StatusCustomer.BLOCKED, customer.getStatusCustomer());
         verify(customerRepository).findById(customerId);
     }
+
+
+    @Test
+    void shouldRejectCustomerRegistrationWhenCpfConstraintIsViolated() {
+        when(customerRepository.existsByCpf(request.cpf())).thenReturn(false);
+        when(customerRepository.existsByEmailIgnoreCase(request.email())).thenReturn(false);
+
+        DataIntegrityViolationException databaseException =
+                new DataIntegrityViolationException("CPF constraint violation");
+
+        CustomerAlreadyExistsException expectedException =
+                new CustomerAlreadyExistsException("CPF já cadastrado.");
+
+        when(customerRepository.saveAndFlush(any(Customer.class)))
+                .thenThrow(databaseException);
+
+        when(databaseExceptionHandler.handleIntegrityViolation(databaseException))
+                .thenReturn(expectedException);
+
+        CustomerAlreadyExistsException exception = assertThrows(
+                CustomerAlreadyExistsException.class,
+                () -> customerService.createCustomer(request)
+        );
+
+        assertEquals("CPF já cadastrado.", exception.getMessage());
+
+        verify(databaseExceptionHandler).handleIntegrityViolation(databaseException);
+    }
+
+
+    @Test
+    void shouldRejectCustomerRegistrationWhenEmailConstraintIsViolated() {
+        when(customerRepository.existsByCpf(request.cpf())).thenReturn(false);
+        when(customerRepository.existsByEmailIgnoreCase(request.email())).thenReturn(false);
+
+        DataIntegrityViolationException databaseException =
+                new DataIntegrityViolationException("Email constraint violation");
+
+        CustomerAlreadyExistsException expectedException =
+                new CustomerAlreadyExistsException("Email já cadastrado.");
+
+        when(customerRepository.saveAndFlush(any(Customer.class)))
+                .thenThrow(databaseException);
+
+        when(databaseExceptionHandler.handleIntegrityViolation(databaseException))
+                .thenReturn(expectedException);
+
+        CustomerAlreadyExistsException exception = assertThrows(
+                CustomerAlreadyExistsException.class,
+                () -> customerService.createCustomer(request)
+        );
+
+        assertEquals("Email já cadastrado.", exception.getMessage());
+
+        verify(databaseExceptionHandler).handleIntegrityViolation(databaseException);
+    }
+
+
 
 }

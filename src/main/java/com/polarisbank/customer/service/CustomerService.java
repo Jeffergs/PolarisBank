@@ -1,3 +1,4 @@
+
 package com.polarisbank.customer.service;
 
 import com.polarisbank.customer.StatusCustomer;
@@ -6,8 +7,10 @@ import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.BusinessException;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
 import com.polarisbank.customer.exception.CustomerNotFoundException;
+import com.polarisbank.customer.exception.DatabaseExceptionHandler;
 import com.polarisbank.customer.repository.CustomerRepository;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,13 @@ import java.util.UUID;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final DatabaseExceptionHandler databaseExceptionHandler;
 
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(
+            CustomerRepository customerRepository,
+            DatabaseExceptionHandler databaseExceptionHandler) {
         this.customerRepository = customerRepository;
+        this.databaseExceptionHandler = databaseExceptionHandler;
     }
 
     @Transactional
@@ -29,16 +36,23 @@ public class CustomerService {
         if (customerRepository.existsByCpf(request.cpf())) {
             throw new CustomerAlreadyExistsException("CPF já cadastrado.");
         }
+
         if (customerRepository.existsByEmailIgnoreCase(request.email())) {
             throw new CustomerAlreadyExistsException("Email já cadastrado.");
         }
+
         Customer customer = new Customer(
                 request.fullName(),
                 request.cpf(),
                 request.email(),
                 request.birthDate()
         );
-        customerRepository.save(customer);
+
+        try {
+            customerRepository.saveAndFlush(customer);
+        } catch (DataIntegrityViolationException exception) {
+            throw databaseExceptionHandler.handleIntegrityViolation(exception);
+        }
     }
 
     public Customer findCustomerById(UUID customerId) {
@@ -58,6 +72,7 @@ public class CustomerService {
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Cliente não encontrado."));
+
         customer.changeStatus(newStatus);
     }
 }
