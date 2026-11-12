@@ -59,8 +59,8 @@ class CustomerServiceTest {
     void shouldRejectCustomerRegistrationWhenCpfAlreadyExists() {
         when(customerRepository.existsByCpf(request.cpf())).thenReturn(true);
         assertThrows(CustomerAlreadyExistsException.class,() -> customerService.createCustomer(request));
-        verify(customerRepository, never()).existsByEmailIgnoreCase(anyString());
         verify(customerRepository).existsByCpf(request.cpf());
+        verify(customerRepository, never()).existsByEmailIgnoreCase(anyString());
         verify(customerRepository, never()).save(any(Customer.class));
     }
 
@@ -76,12 +76,14 @@ class CustomerServiceTest {
 
         verify(customerRepository).save(captor.capture());
 
-        Customer customer = captor.getValue();
+        Customer savedCustomer = captor.getValue();
 
-        assertEquals(request.fullName(), customer.getFullName());
-        assertEquals(request.cpf(), customer.getCpf());
-        assertEquals(request.email(), customer.getEmail());
-        assertEquals(request.birthDate(), customer.getBirthDate());
+        assertEquals(request.fullName(), savedCustomer.getFullName());
+        assertEquals(request.cpf(), savedCustomer.getCpf());
+        assertEquals(request.email(), savedCustomer.getEmail());
+        assertEquals(request.birthDate(), savedCustomer.getBirthDate());
+        assertEquals(StatusCustomer.ACTIVE, savedCustomer.getStatusCustomer());
+
         verify(customerRepository).existsByCpf(request.cpf());
         verify(customerRepository).existsByEmailIgnoreCase(request.email());
     }
@@ -162,7 +164,9 @@ class CustomerServiceTest {
         when(customerRepository.findById(customerId))
                 .thenReturn(Optional.empty());
 
-        assertThrows(BusinessException.class, () -> customerService.changeCustomerStatus(customerId, StatusCustomer.INACTIVE));
+        assertThrows(
+                CustomerNotFoundException.class,
+                () -> customerService.changeCustomerStatus(customerId, StatusCustomer.INACTIVE));
         verify(customerRepository).findById(customerId);
     }
 
@@ -176,7 +180,6 @@ class CustomerServiceTest {
         );
 
         verifyNoInteractions(customerRepository);
-        assertEquals(StatusCustomer.ACTIVE, customer.getStatusCustomer());
     }
 
     @Test

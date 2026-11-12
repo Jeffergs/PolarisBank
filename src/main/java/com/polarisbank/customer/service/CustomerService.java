@@ -57,7 +57,7 @@ public class CustomerService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
+                .orElseThrow(() -> new CustomerNotFoundException("Cliente não encontrado."));
         customer.changeStatus(newStatus);
     }
 }
