@@ -4,6 +4,7 @@ import com.polarisbank.customer.StatusCustomer;
 import com.polarisbank.customer.dto.CustomerRequest;
 import com.polarisbank.customer.entity.Customer;
 import com.polarisbank.customer.exception.CustomerAlreadyExistsException;
+import com.polarisbank.customer.exception.DatabaseExceptionHandler;
 import com.polarisbank.customer.repository.CustomerRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,6 +32,9 @@ class CustomerServiceIntegrationTest {
 
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private DatabaseExceptionHandler databaseExceptionHandler;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -137,4 +142,66 @@ class CustomerServiceIntegrationTest {
         assertEquals(request.birthDate(), savedCustomer.getBirthDate());
         assertEquals(StatusCustomer.ACTIVE, savedCustomer.getStatusCustomer());
     }
+
+
+    @Test
+    void shouldHandleCpfConstraintViolationFromDatabase() {
+        Customer existingCustomer = new Customer(
+                "Cliente Existente",
+                "52998224725",
+                "existente@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        customerRepository.saveAndFlush(existingCustomer);
+
+        Customer duplicateCustomer = new Customer(
+                "Novo Cliente",
+                "52998224725",
+                "novo@example.com",
+                LocalDate.of(1990, 8, 10)
+        );
+
+        DataIntegrityViolationException exception = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> customerRepository.saveAndFlush(duplicateCustomer)
+        );
+
+        RuntimeException result = databaseExceptionHandler.handleIntegrityViolation(exception);
+
+        assertInstanceOf(CustomerAlreadyExistsException.class, result);
+        assertEquals("CPF já cadastrado.", result.getMessage());
+    }
+
+
+    @Test
+    void shouldHandleEmailConstraintViolationFromDatabase() {
+        Customer existingCustomer = new Customer(
+                "Cliente Existente",
+                "52998224725",
+                "existente@example.com",
+                LocalDate.of(1995, 5, 20)
+        );
+
+        customerRepository.saveAndFlush(existingCustomer);
+
+        Customer duplicateCustomer = new Customer(
+                "Novo Cliente",
+                "11144477735",
+                "EXISTENTE@example.com",
+                LocalDate.of(1990, 8, 10)
+        );
+
+        DataIntegrityViolationException exception = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> customerRepository.saveAndFlush(duplicateCustomer)
+        );
+
+        RuntimeException result = databaseExceptionHandler.handleIntegrityViolation(exception);
+
+        assertInstanceOf(CustomerAlreadyExistsException.class, result);
+        assertEquals("Email já cadastrado.", result.getMessage());
+    }
+
+
 }
