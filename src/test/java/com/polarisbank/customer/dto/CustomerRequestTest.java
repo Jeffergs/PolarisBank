@@ -54,7 +54,9 @@ class CustomerRequestTest {
                 "jefferson@example.com",
                 parseBirthDate("20/05/1995"));
 
-        assertTrue(validator.validate(request).isEmpty());
+        var violations = validator.validateProperty(request, "fullName");
+
+        assertTrue(violations.isEmpty());
     }
 
     @Test
